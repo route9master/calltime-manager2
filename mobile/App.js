@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, View, ActivityIndicator } from 'react-native';
+import { Text, View, ActivityIndicator, Alert } from 'react-native';
+import CallLogs from 'react-native-call-log';
 import * as Updates from 'expo-updates';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -15,17 +16,16 @@ const Tab = createBottomTabNavigator();
 
 const syncCallLog = async () => {
   try {
-    console.log('Starting sync...');
-    const CallLogs = require('react-native-call-log');
+    Alert.alert('동기화 시작', 'CallLogs 모듈 로드 및 통화기록 요청 중...');
     const logs = await CallLogs.loadAll();
-    console.log('Logs received:', logs ? logs.length : 'null');
+    Alert.alert('로그 수: ' + (logs ? logs.length : 'null'));
     if (!logs || logs.length === 0) {
       console.log('Call log sync: no logs found');
       return;
     }
 
     const calls = logs.map((log) => ({
-      phone_number: log.phoneNumber || log.rawType,
+      phone_number: log.phoneNumber || String(log.rawType),
       call_date: new Date(parseInt(log.timestamp)).toISOString(),
       duration: parseInt(log.duration) || 0,
       call_type: log.type || 'UNKNOWN',
@@ -34,6 +34,7 @@ const syncCallLog = async () => {
     const res = await api.post('/api/calls/sync', { calls });
     console.log(`Call log sync success: ${logs.length} fetched, ${res.data.inserted} inserted`);
   } catch (err) {
+    Alert.alert('동기화 오류', err.message || String(err));
     console.log('Call log sync error:', err.message);
   }
 };
