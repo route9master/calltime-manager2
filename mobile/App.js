@@ -55,19 +55,20 @@ export default function App() {
 
   useEffect(() => {
     const init = async () => {
-      await checkForUpdates();
       const stored = await AsyncStorage.getItem('user');
       if (stored) {
         setUser(JSON.parse(stored));
         await syncCallLog();
       }
       setLoading(false);
+      await checkForUpdates();
     };
     init();
   }, []);
 
   const handleLogin = async (userData) => {
     setUser(userData);
+    Alert.alert('로그인 완료, 동기화 시작');
     await syncCallLog();
   };
 
