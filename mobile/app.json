@@ -23,15 +23,9 @@
       ]
     },
     "plugins": [
-      [
-        "expo-updates",
-        {
-          "username": "route9master"
-        }
-      ]
+      "expo-updates"
     ],
     "updates": {
-      "url": "https://u.expo.dev/calltime-manager2",
       "enabled": true,
       "checkAutomatically": "ON_LOAD"
     },
@@ -40,8 +34,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "calltime-manager2"
+        "projectId": "2b12359a-7a7f-4f8e-90bf-bc32df004a2f"
       }
-    }
+    },
+    "owner": "route9"
   }
 }
