@@ -15,18 +15,24 @@ const Tab = createBottomTabNavigator();
 
 const syncCallLog = async () => {
   try {
+    console.log('Starting sync...');
     const CallLogs = require('react-native-call-log');
     const logs = await CallLogs.loadAll();
-    if (!logs || logs.length === 0) return;
+    console.log('Logs received:', logs ? logs.length : 'null');
+    if (!logs || logs.length === 0) {
+      console.log('Call log sync: no logs found');
+      return;
+    }
 
     const calls = logs.map((log) => ({
       phone_number: log.phoneNumber || log.rawType,
-      call_date: new Date(parseInt(log.timestamp)).toISOString().split('T')[0],
+      call_date: new Date(parseInt(log.timestamp)).toISOString(),
       duration: parseInt(log.duration) || 0,
-      call_type: log.type === '1' ? 'INCOMING' : log.type === '2' ? 'OUTGOING' : 'MISSED',
+      call_type: log.type || 'UNKNOWN',
     }));
 
-    await api.post('/api/calls/sync', { calls });
+    const res = await api.post('/api/calls/sync', { calls });
+    console.log(`Call log sync success: ${logs.length} fetched, ${res.data.inserted} inserted`);
   } catch (err) {
     console.log('Call log sync error:', err.message);
   }

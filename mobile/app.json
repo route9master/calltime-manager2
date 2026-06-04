@@ -27,7 +27,8 @@
     ],
     "updates": {
       "enabled": true,
-      "checkAutomatically": "ON_LOAD"
+      "checkAutomatically": "ON_LOAD",
+      "url": "https://u.expo.dev/2b12359a-7a7f-4f8e-90bf-bc32df004a2f"
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -37,6 +38,7 @@
         "projectId": "2b12359a-7a7f-4f8e-90bf-bc32df004a2f"
       }
     },
-    "owner": "route9"
+    "owner": "route9",
+    "ios": {}
   }
 }
