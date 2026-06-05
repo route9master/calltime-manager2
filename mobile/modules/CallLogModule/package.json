@@ -1,0 +1,10 @@
+{
+  "name": "expo-call-log",
+  "version": "1.0.0",
+  "description": "Native call log module using Android ContentResolver",
+  "main": "index.js",
+  "scripts": {},
+  "peerDependencies": {
+    "expo": "*"
+  }
+}
