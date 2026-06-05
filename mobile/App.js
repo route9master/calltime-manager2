@@ -48,7 +48,18 @@ const syncCallLog = async () => {
       return;
     }
 
-    const calls = logs.map((log) => ({
+    const now = new Date();
+    const monthStartMs = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const thisMonthLogs = logs.filter((log) => parseInt(log.timestamp) >= monthStartMs);
+
+    Alert.alert('이번달 로그', `${thisMonthLogs.length}건 (전체 ${logs.length}건)`);
+
+    if (thisMonthLogs.length === 0) {
+      console.log('Call log sync: no logs this month');
+      return;
+    }
+
+    const calls = thisMonthLogs.map((log) => ({
       phone_number: log.phoneNumber || '',
       call_date: new Date(parseInt(log.timestamp)).toISOString(),
       duration: parseInt(log.duration) || 0,
@@ -62,8 +73,8 @@ const syncCallLog = async () => {
       const res = await api.post('/api/calls/sync', { calls: chunk });
       totalInserted += res.data.inserted || 0;
     }
-    Alert.alert('동기화 완료', `${logs.length}개 가져옴, ${totalInserted}개 저장됨`);
-    console.log(`Call log sync success: ${logs.length} fetched, ${totalInserted} inserted`);
+    Alert.alert('동기화 완료', `이번달 ${thisMonthLogs.length}개 가져옴, ${totalInserted}개 저장됨`);
+    console.log(`Call log sync success: ${thisMonthLogs.length} fetched, ${totalInserted} inserted`);
   } catch (err) {
     Alert.alert('동기화 오류', err.message || String(err));
     console.log('Call log sync error:', err.message);
