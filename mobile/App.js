@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, View, ActivityIndicator, Alert, PermissionsAndroid } from 'react-native';
+import { Text, View, ActivityIndicator, Alert, PermissionsAndroid, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { getAll as getCallLogs } from './modules/CallLogModule';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -10,6 +11,8 @@ import MainScreen from './src/screens/MainScreen';
 import EmployeeScreen from './src/screens/EmployeeScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import api from './src/api';
+
+export const SyncContext = createContext(0);
 
 const Tab = createBottomTabNavigator();
 
@@ -70,13 +73,15 @@ const syncCallLog = async () => {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [syncCount, setSyncCount] = useState(0);
 
   useEffect(() => {
     const init = async () => {
       const stored = await AsyncStorage.getItem('user');
       if (stored) {
-        setUser(JSON.parse(stored));
-        await syncCallLog();
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+        if (parsed.role !== 'admin') await syncCallLog();
       }
       setLoading(false);
     };
@@ -85,13 +90,20 @@ export default function App() {
 
   const handleLogin = async (userData) => {
     setUser(userData);
-    Alert.alert('로그인 완료, 동기화 시작');
-    await syncCallLog();
+    if (userData.role !== 'admin') {
+      Alert.alert('로그인 완료, 동기화 시작');
+      await syncCallLog();
+    }
   };
 
   const handleLogout = async () => {
     await AsyncStorage.multiRemove(['token', 'user']);
     setUser(null);
+  };
+
+  const handleManualSync = async () => {
+    await syncCallLog();
+    setSyncCount((c) => c + 1);
   };
 
   if (loading) {
@@ -107,34 +119,63 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={{
-          headerRight: () => (
-            <Text onPress={handleLogout} style={{ marginRight: 16, color: '#1976d2', fontSize: 14 }}>
-              로그아웃
-            </Text>
-          ),
-        }}
-      >
-        <Tab.Screen
-          name="Main"
-          component={MainScreen}
-          options={{ title: '랭킹', tabBarLabel: '랭킹' }}
-        />
-        <Tab.Screen
-          name="Employee"
-          component={EmployeeScreen}
-          options={{ title: '내 콜타임', tabBarLabel: '내 콜타임' }}
-        />
-        {user.role === 'admin' && (
+    <SyncContext.Provider value={syncCount}>
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={{
+            headerRight: () => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16, gap: 14 }}>
+                {user.role !== 'admin' && (
+                  <TouchableOpacity onPress={handleManualSync} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Ionicons name="refresh" size={22} color="#1976d2" />
+                  </TouchableOpacity>
+                )}
+                <Text onPress={handleLogout} style={{ color: '#1976d2', fontSize: 14 }}>
+                  로그아웃
+                </Text>
+              </View>
+            ),
+          }}
+        >
           <Tab.Screen
-            name="Admin"
-            component={AdminScreen}
-            options={{ title: '관리자', tabBarLabel: '관리자' }}
+            name="Main"
+            component={MainScreen}
+            options={{
+              title: '랭킹',
+              tabBarLabel: '랭킹',
+              tabBarIcon: ({ color, size, focused }) => (
+                <Ionicons name={focused ? 'trophy' : 'trophy-outline'} size={size} color={color} />
+              ),
+            }}
           />
-        )}
-      </Tab.Navigator>
-    </NavigationContainer>
+          {user.role !== 'admin' && (
+            <Tab.Screen
+              name="Employee"
+              component={EmployeeScreen}
+              options={{
+                title: '내 콜타임',
+                tabBarLabel: '내 콜타임',
+                tabBarIcon: ({ color, size, focused }) => (
+                  <Ionicons name={focused ? 'call' : 'call-outline'} size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+          {user.role === 'admin' && (
+            <Tab.Screen
+              name="Admin"
+              component={AdminScreen}
+              options={{
+                title: '관리자',
+                tabBarLabel: '관리자',
+                tabBarIcon: ({ color, size, focused }) => (
+                  <Ionicons name={focused ? 'settings' : 'settings-outline'} size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+        </Tab.Navigator>
+      </NavigationContainer>
+    </SyncContext.Provider>
   );
 }
