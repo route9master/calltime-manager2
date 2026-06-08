@@ -132,4 +132,48 @@ router.get('/admin-detail', authenticate, adminOnly, async (req, res) => {
   }
 });
 
+router.get('/admin-daily', authenticate, adminOnly, async (req, res) => {
+  const { userId, date } = req.query;
+  const dateStr = date || new Date().toISOString().split('T')[0];
+  try {
+    const result = await pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE call_type = 'OUTGOING') AS outgoing_count,
+         COUNT(*) FILTER (WHERE call_type = 'INCOMING') AS incoming_count,
+         COUNT(*) FILTER (WHERE call_type IN ('MISSED','REJECTED')) AS missed_count,
+         COALESCE(SUM(duration), 0) AS total_duration
+       FROM call_logs
+       WHERE user_id = $1::integer
+         AND call_date = $2::date`,
+      [userId, dateStr]
+    );
+    res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: '서버 오류' });
+  }
+});
+
+router.get('/admin-daily-all', authenticate, adminOnly, async (req, res) => {
+  const { date } = req.query;
+  const dateStr = date || new Date().toISOString().split('T')[0];
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.name,
+              COUNT(c.id) FILTER (WHERE c.call_type = 'OUTGOING') AS outgoing_count,
+              COUNT(c.id) FILTER (WHERE c.call_type = 'INCOMING') AS incoming_count,
+              COUNT(c.id) FILTER (WHERE c.call_type IN ('MISSED','REJECTED')) AS missed_count,
+              COALESCE(SUM(c.duration), 0) AS total_duration
+       FROM users u
+       LEFT JOIN call_logs c ON u.id = c.user_id AND c.call_date = $1::date
+       WHERE u.role = 'employee'
+       GROUP BY u.id, u.name
+       ORDER BY total_duration DESC`,
+      [dateStr]
+    );
+    res.json(result.rows);
+  } catch {
+    res.status(500).json({ error: '서버 오류' });
+  }
+});
+
 module.exports = router;
