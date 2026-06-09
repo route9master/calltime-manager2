@@ -13,13 +13,16 @@ router.post('/sync', authenticate, async (req, res) => {
     const { phone_number, call_date, duration, call_type } = call;
     if (!phone_number || !call_date) continue;
     try {
-      await pool.query(
-        `INSERT INTO call_logs (user_id, phone_number, call_date, duration, call_type)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (user_id, phone_number, call_date) DO NOTHING`,
-        [req.user.id, phone_number, call_date, duration || 0, call_type || 'OUTGOING']
+      const ts = new Date(call_date);
+      if (isNaN(ts.getTime())) continue;
+      const dateStr = ts.toISOString().split('T')[0];
+      const result = await pool.query(
+        `INSERT INTO call_logs (user_id, phone_number, call_date, call_timestamp, duration, call_type)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (user_id, phone_number, call_timestamp) DO NOTHING`,
+        [req.user.id, phone_number, dateStr, ts.toISOString(), duration || 0, call_type || 'OUTGOING']
       );
-      inserted++;
+      inserted += result.rowCount;
     } catch {}
   }
 

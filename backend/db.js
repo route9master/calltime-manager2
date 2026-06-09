@@ -21,10 +21,11 @@ const initDB = async () => {
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       phone_number VARCHAR(50) NOT NULL,
       call_date DATE NOT NULL,
+      call_timestamp TIMESTAMPTZ NOT NULL,
       duration INTEGER NOT NULL DEFAULT 0,
       call_type VARCHAR(20),
       created_at TIMESTAMP DEFAULT NOW(),
-      UNIQUE(user_id, phone_number, call_date)
+      UNIQUE(user_id, phone_number, call_timestamp)
     );
 
     CREATE TABLE IF NOT EXISTS monthly_prizes (
