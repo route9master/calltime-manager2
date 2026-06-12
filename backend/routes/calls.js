@@ -40,7 +40,7 @@ router.get('/my', authenticate, async (req, res) => {
        WHERE user_id = $1
          AND call_date >= $2::date
          AND call_date <= $3::date
-       ORDER BY call_date DESC`,
+       ORDER BY call_timestamp DESC`,
       [req.user.id, start, end]
     );
     res.json(result.rows);

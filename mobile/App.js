@@ -92,7 +92,6 @@ export default function App() {
       if (stored) {
         const parsed = JSON.parse(stored);
         setUser(parsed);
-        if (parsed.role !== 'admin') await syncCallLog();
       }
       setLoading(false);
     };
